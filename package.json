@@ -1,0 +1,14 @@
+{
+  "name": "toy",
+  "version": "1.0.0",
+  "description": "https://egghead.io/lessons/rxjs-separate-logic-from-effects-in-cycle-js",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "now": "^16.3.1"
+  }
+}
