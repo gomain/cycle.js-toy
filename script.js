@@ -1,10 +1,15 @@
 
 //Logic
 function main () {
-  return xs.periodic(1000)
-    .fold(acc => acc+1,0)
-    .map(i => `Seconds elapsed: ${i}`);
+  return {
+    DOM: xs.periodic(1000)
+      .fold(acc => acc+1,0)
+      .map(i => `Seconds elapsed: ${i}`),
+    log: xs.periodic(2000)
+      .fold(acc => acc+1,0)
+  };
 }
+
 //Effect
 function domDriver(text$) {
   text$.subscribe({
@@ -22,6 +27,6 @@ function logDriver(msg$) {
   });
 }
 
-const sink = main();
-domDriver(sink);
-logDriver(sink);
+const {DOM,log} = main();
+domDriver(DOM);
+logDriver(log);
