@@ -3,9 +3,9 @@ import fromEvent from 'xstream/extra/fromEvent';
 
 //Logic
 function main (sources) {
-  const click$ = sources.DOM;
+  const click$ = sources.DOM.selectEvents([{selector: '#app', eventType: 'mouseenter'}]);
   return {
-    DOM: click$.map(() => xs
+    DOM: click$.startWith(null).map(() => xs
 		    .periodic(1000)
 		    .fold(acc => acc+1,0))
       .flatten()
@@ -17,7 +17,8 @@ function main (sources) {
             tagName: 'span',
             children: [ `Seconds elapsed: ${i}` ]
           }]
-        }])),
+        }
+      ])),
     log: xs.periodic(2000)
       .fold(acc => acc+2,0)
       .map(i => xs.create().startWith(i))
@@ -30,6 +31,7 @@ function domDriver(dom$) {
   //Write
   dom$.subscribe({
     next: children => {
+      console.log('dom\'s next');
       const root =document.querySelector('#app');
       root.innerHTML = '';
       createChildren(root,children);
@@ -50,8 +52,14 @@ function domDriver(dom$) {
     }
   }
   //Read
-  const domSource = fromEvent(document, 'click');
-  return domSource;
+  return {
+    selectEvents: function(eventSelectors) {
+      const eventStreams = eventSelectors
+            .map(({selector,eventType}) => fromEvent(document.querySelector(selector), eventType));
+      return xs.merge(...eventStreams);
+    }
+  };
+
 }
 
 function logDriver(msg$) {
@@ -63,14 +71,12 @@ function logDriver(msg$) {
 }
 
 function run(mainFn, drivers) {
-  const sources = {};
   const fakeSinks = {};
-
+  const sources = {};
   Object.entries(drivers).forEach(([driverKey,driver]) => {
     const fakeSink = xs.create();
     fakeSinks[driverKey] = fakeSink;
-    const source = driver(fakeSink);
-    sources[driverKey] = source;
+    sources[driverKey] = driver(fakeSink);
   });
   const sinks = mainFn(sources);
   Object.entries(sinks).forEach(([sinkKey,sink]) => {
