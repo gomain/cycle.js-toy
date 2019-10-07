@@ -4,11 +4,17 @@
   "description": "https://egghead.io/lessons/rxjs-separate-logic-from-effects-in-cycle-js",
   "main": "index.html",
   "scripts": {
+    "build": "parcel build index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "now": "^16.3.1"
+    "now": "^16.3.1",
+    "parcel-bundler": "^1.12.4",
+    "serve": "^11.2.0"
+  },
+  "dependencies": {
+    "xstream": "^11.11.0"
   }
 }
