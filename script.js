@@ -3,7 +3,7 @@ import fromEvent from 'xstream/extra/fromEvent';
 
 //Logic
 function main (sources) {
-  const click$ = sources.DOM.selectEvents([{selector: '#app', eventType: 'mouseenter'}]);
+  const click$ = sources.DOM.select('#app').events('mouseover');
   return {
     DOM: click$.startWith(null).map(() => xs
 		    .periodic(1000)
@@ -31,7 +31,6 @@ function domDriver(dom$) {
   //Write
   dom$.subscribe({
     next: children => {
-      console.log('dom\'s next');
       const root =document.querySelector('#app');
       root.innerHTML = '';
       createChildren(root,children);
@@ -53,10 +52,14 @@ function domDriver(dom$) {
   }
   //Read
   return {
-    selectEvents: function(eventSelectors) {
-      const eventStreams = eventSelectors
-            .map(({selector,eventType}) => fromEvent(document.querySelector(selector), eventType));
-      return xs.merge(...eventStreams);
+    select: function(selector) {
+      const elem = document.querySelector(selector);
+      return {
+	events: function (...eventTypes) {
+	  const event$s = eventTypes.map(eventType => fromEvent(elem,eventType));
+	  return xs.merge(...event$s);
+	}
+      };
     }
   };
 
@@ -71,13 +74,15 @@ function logDriver(msg$) {
 }
 
 function run(mainFn, drivers) {
-  const fakeSinks = {};
-  const sources = {};
-  Object.entries(drivers).forEach(([driverKey,driver]) => {
-    const fakeSink = xs.create();
-    fakeSinks[driverKey] = fakeSink;
-    sources[driverKey] = driver(fakeSink);
-  });
+  const { fakeSinks, sources } =
+	Object.entries(drivers).reduce(({ fakeSinks, sources }, [ driverKey, driver ]) => {
+	  const fakeSink = xs.create();
+	  const source = driver(fakeSink);
+	  return {
+	    fakeSinks: Object.assign(fakeSinks, {[driverKey]: fakeSink}),
+	    sources: Object.assign(sources,{[driverKey]: source})
+	  };
+	},{ fakeSinks: {}, sources: {} });
   const sinks = mainFn(sources);
   Object.entries(sinks).forEach(([sinkKey,sink]) => {
     Object.entries(fakeSinks).forEach(([fakeSinkKey,fakeSink]) => {
@@ -85,6 +90,7 @@ function run(mainFn, drivers) {
         try {
 	  fakeSink.imitate(sink);
         } catch (e) {
+	  console.log(`sinkKey: ${sinkKey}`);
           console.log(fakeSink);
           console.log(sink);
           console.log(e);
